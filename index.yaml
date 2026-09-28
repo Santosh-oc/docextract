@@ -29,8 +29,46 @@ entries:
           type: basepath
         timeout: "10m"
     apiVersion: v2
+    appVersion: 1.0.1
+    created: "2026-09-28T11:15:08.677321281Z"
+    description: Extract user-defined fields from PDF documents using a configurable
+      vision/multimodal LLM.
+    digest: 8240ec5f1f883d1cab1a4ef19a4c6757ccc7f0f7c0a9c181c5dc778f7e31597a
+    name: docextract
+    type: application
+    urls:
+    - https://santosh-oc.github.io/docextract/docextract-0.1.1.tgz
+    version: 0.1.1
+  - annotations:
+      dkubex: |
+        url: "/docextract"
+        displayName: Document Extraction
+        icon: "https://raw.githubusercontent.com/dkubeio/docextract/main/assets/icon.svg"
+        docs: "https://dkubeio.github.io/docs-site/components/docextract/"
+        images:
+          - "https://raw.githubusercontent.com/dkubeio/docextract/main/assets/screenshot-1.png"
+        description: "Extract user-defined fields from PDF documents using a configurable vision/multimodal LLM."
+        categories:
+          - "AI / ML"
+        roles:
+          - "admin"
+          - "user"
+        resources:
+          cpu:
+            min: "250m"
+            recommended: "1"
+          memory:
+            min: "512Mi"
+            recommended: "2Gi"
+        dependencies:
+          - postgres
+          - minio
+        routing:
+          type: basepath
+        timeout: "10m"
+    apiVersion: v2
     appVersion: 1.0.0
-    created: "2026-09-28T11:03:19.879891991Z"
+    created: "2026-09-28T11:15:08.676902757Z"
     description: Extract user-defined fields from PDF documents using a configurable
       vision/multimodal LLM.
     digest: 4ba187d9076b38cb277599c490ee87407f6952a64a157ff65333cde17693fa51
@@ -39,4 +77,4 @@ entries:
     urls:
     - https://santosh-oc.github.io/docextract/docextract-0.1.0.tgz
     version: 0.1.0
-generated: "2026-09-28T11:03:19.879304019Z"
+generated: "2026-09-28T11:15:08.676379336Z"
