@@ -1,0 +1,53 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/santosh-oc/docextract
+  tag: ""
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+# Hostname for the HTTPRoute. "*" or empty means match any host.
+hostname: "*"
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 2Gi
+
+# Injected by DKubeX at install time because both are declared in the `dependencies` list in
+# Chart.yaml. postgres.db_url arrives as a bare `postgresql://` URL; the deployment template
+# rewrites it to `postgresql+asyncpg://` for SQLAlchemy's async driver.
+postgres:
+  db_url: ""
+minio:
+  endpoint: ""
+  access_key: ""
+  secret_key: ""
+  bucket: ""
+
+# Vision model defaults. All of this is also editable at runtime from the app's own Settings
+# page (persisted to the PVC below) — these are only the first-boot fallback.
+model:
+  provider: openai_compatible
+  baseUrl: ""
+  name: ""
+  apiKey: ""
+  temperature: "0"
+  maxTokens: "4096"
+  timeout: "120"
+  pdfRenderDpi: "150"
+
+maxPdfSizeMb: 25
+
+# Settings persist to a JSON file under this PVC so they survive a pod restart/reschedule, not
+# just an in-process reload. App-owned storage — see references/storage.md.
+storage:
+  storageClass: ""
+  size: 1Gi
+  mountPath: /app/backend/.data

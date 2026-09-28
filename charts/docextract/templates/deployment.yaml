@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "docextract.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "docextract.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "docextract.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "docextract.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: PORT
+              value: {{ .Values.service.port | quote }}
+            # DKubeX serves base-path apps under /<app-name>; the app must honour it. The
+            # frontend bakes this into its build (see the Dockerfile); app/main.py's
+            # _RootPathMiddleware applies it at request time, because this gateway's HTTPRoute
+            # forwards the full, unstripped request path rather than rewriting it away.
+            - name: DKUBEX_BASE_PATH
+              value: "/{{ include "docextract.name" . }}"
+            - name: APP_ENV
+              value: production
+            - name: LOG_LEVEL
+              value: INFO
+            - name: PLATFORM_AUTH_REQUIRED
+              value: "true"
+            - name: MAX_PDF_SIZE_MB
+              value: {{ .Values.maxPdfSizeMb | quote }}
+            - name: SETTINGS_FILE
+              value: "{{ .Values.storage.mountPath }}/model_settings.json"
+            {{- if .Values.postgres }}
+            # dependencies.md injects a bare postgresql:// URL; SQLAlchemy's async engine needs
+            # the +asyncpg driver marker.
+            - name: DATABASE_URL
+              value: {{ .Values.postgres.db_url | replace "postgresql://" "postgresql+asyncpg://" | quote }}
+            {{- end }}
+            {{- if .Values.minio }}
+            # dependencies.md injects a full endpoint URL (scheme included); the minio SDK wants
+            # a bare host:port and a separate secure flag.
+            - name: MINIO_ENDPOINT
+              value: {{ .Values.minio.endpoint | trimPrefix "http://" | trimPrefix "https://" | quote }}
+            - name: MINIO_SECURE
+              value: {{ if hasPrefix "https://" .Values.minio.endpoint }}"true"{{ else }}"false"{{ end }}
+            - name: MINIO_ACCESS_KEY
+              value: {{ .Values.minio.access_key | quote }}
+            - name: MINIO_SECRET_KEY
+              value: {{ .Values.minio.secret_key | quote }}
+            - name: MINIO_BUCKET_DOCUMENTS
+              value: {{ .Values.minio.bucket | quote }}
+            {{- end }}
+            - name: MODEL_PROVIDER
+              value: {{ .Values.model.provider | quote }}
+            - name: MODEL_BASE_URL
+              value: {{ .Values.model.baseUrl | quote }}
+            - name: MODEL_NAME
+              value: {{ .Values.model.name | quote }}
+            - name: MODEL_API_KEY
+              value: {{ .Values.model.apiKey | quote }}
+            - name: MODEL_TEMPERATURE
+              value: {{ .Values.model.temperature | quote }}
+            - name: MODEL_MAX_TOKENS
+              value: {{ .Values.model.maxTokens | quote }}
+            - name: MODEL_TIMEOUT
+              value: {{ .Values.model.timeout | quote }}
+            - name: PDF_RENDER_DPI
+              value: {{ .Values.model.pdfRenderDpi | quote }}
+          volumeMounts:
+            - name: settings
+              mountPath: {{ .Values.storage.mountPath }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: settings
+          persistentVolumeClaim:
+            claimName: {{ include "docextract.fullname" . }}-settings

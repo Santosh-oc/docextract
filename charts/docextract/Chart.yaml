@@ -1,0 +1,34 @@
+apiVersion: v2
+name: docextract
+description: Extract user-defined fields from PDF documents using a configurable vision/multimodal LLM.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+annotations:
+  dkubex: |
+    url: "/docextract"
+    displayName: Document Extraction
+    icon: "https://raw.githubusercontent.com/dkubeio/docextract/main/assets/icon.svg"
+    docs: "https://dkubeio.github.io/docs-site/components/docextract/"
+    images:
+      - "https://raw.githubusercontent.com/dkubeio/docextract/main/assets/screenshot-1.png"
+    description: "Extract user-defined fields from PDF documents using a configurable vision/multimodal LLM."
+    categories:
+      - "AI / ML"
+    roles:
+      - "admin"
+      - "user"
+    resources:
+      cpu:
+        min: "250m"
+        recommended: "1"
+      memory:
+        min: "512Mi"
+        recommended: "2Gi"
+    dependencies:
+      - postgres
+      - minio
+    routing:
+      type: basepath
+    timeout: "10m"
