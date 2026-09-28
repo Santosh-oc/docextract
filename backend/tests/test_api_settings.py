@@ -2,6 +2,30 @@ import httpx
 import pytest
 import respx
 
+import app.api.settings as settings_api
+
+
+@pytest.mark.asyncio
+async def test_put_model_settings_disk_failure_returns_clean_502(client, monkeypatch):
+    def _boom(_settings):
+        raise PermissionError("[Errno 13] Permission denied: '/app/backend/.data/model_settings.json'")
+
+    monkeypatch.setattr(settings_api, "save_settings", _boom)
+
+    resp = await client.put(
+        "/api/settings/model",
+        json={
+            "provider": "openai_compatible",
+            "api_base_url": "http://mock-vision.test/v1",
+            "api_key": "k",
+            "model_name": "m",
+        },
+    )
+    assert resp.status_code == 502
+    body = resp.json()
+    assert body["error"] == "Could not save settings to disk."
+    assert "Permission denied" in body["detail"]
+
 
 @pytest.mark.asyncio
 async def test_get_model_settings_never_exposes_raw_key(client):

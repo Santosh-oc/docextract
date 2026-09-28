@@ -12,10 +12,19 @@ spec:
     metadata:
       labels: {{- include "docextract.selectorLabels" . | nindent 8 }}
     spec:
+      # The image runs as a non-root "appuser" (uid/gid 10001). A freshly provisioned PVC is
+      # owned by root by default, so without fsGroup the container can start (the image's
+      # baked-in /app/backend/.data is irrelevant once the volume is mounted over it) but any
+      # write into it — e.g. saving Settings — fails with EACCES, surfacing as a 500.
+      securityContext:
+        fsGroup: 10001
       containers:
         - name: app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

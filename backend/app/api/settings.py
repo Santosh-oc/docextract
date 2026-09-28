@@ -2,7 +2,8 @@ import time
 
 from fastapi import APIRouter
 
-from app.core.errors import VisionProviderError
+from app.core.errors import StorageError, VisionProviderError
+from app.core.logging import get_logger
 from app.schemas.settings import (
     ModelListRequest,
     ModelListResponse,
@@ -19,6 +20,7 @@ from app.settings_store import ModelSettings
 from app.vision.base import VisionModelError
 
 router = APIRouter(prefix="/api/settings/model", tags=["settings"])
+logger = get_logger(__name__)
 
 
 @router.get("", response_model=ModelSettingsOut)
@@ -38,7 +40,14 @@ async def put_model_settings(payload: ModelSettingsIn):
         timeout=payload.timeout,
         pdf_render_dpi=payload.pdf_render_dpi,
     )
-    saved = save_settings(settings)
+    try:
+        saved = save_settings(settings)
+    except OSError as exc:
+        logger.error("failed to persist model settings", extra={"operation": "save_settings"})
+        raise StorageError(
+            "Could not save settings to disk.",
+            detail=f"{type(exc).__name__}: {exc}",
+        ) from exc
     return saved.masked()
 
 

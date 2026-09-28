@@ -2,8 +2,8 @@ apiVersion: v2
 name: docextract
 description: Extract user-defined fields from PDF documents using a configurable vision/multimodal LLM.
 type: application
-version: 0.1.0
-appVersion: "1.0.0"
+version: 0.1.1
+appVersion: "1.0.1"
 
 annotations:
   dkubex: |
